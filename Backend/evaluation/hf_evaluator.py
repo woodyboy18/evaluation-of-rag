@@ -205,6 +205,27 @@ class HuggingFaceJudge:
         """
         Evaluates recipe across all 4 finalized metrics strictly in [0.0, 1.0].
         """
+        # Automatically score outright synthesis failures as 0.0
+        title = generated_recipe.get("title", "") if isinstance(generated_recipe, dict) else ""
+        recipe_text = str(generated_recipe)
+        if "Synthesis Error" in title or "Unable to generate" in recipe_text:
+            fail_metric = {
+                "score": 0.0,
+                "reason": "Synthesis error: System failed to generate a recipe for this query.",
+                "evidence": [],
+                "issues": ["Synthesis error / generation failure"],
+                "method": "synthesis_failure_rule"
+            }
+            return {
+                "correctness": fail_metric,
+                "faithfulness": fail_metric,
+                "hallucination": fail_metric,
+                "constraint_adherence": fail_metric,
+                "overall_score": 0.0,
+                "judge_model": self.model_name,
+                "timestamp": datetime.utcnow().isoformat() + "Z"
+            }
+
         c = self.evaluate_single_metric("correctness", user_query, retrieved_recipes, generated_recipe)
         f = self.evaluate_single_metric("faithfulness", user_query, retrieved_recipes, generated_recipe)
         h = self.evaluate_single_metric("hallucination", user_query, retrieved_recipes, generated_recipe)
