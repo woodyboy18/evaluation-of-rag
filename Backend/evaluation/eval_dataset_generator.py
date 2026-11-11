@@ -18,9 +18,9 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from core.recipe_engine import answer_query
-from memory.conversation_memory import save_turn
+from memory.conversation_memory import save_turn, clear_history
 
-# 15 Diverse Benchmark Queries for Novel Recipe Synthesis
+# 30 Diverse Benchmark Queries for Novel Recipe Synthesis
 BENCHMARK_NOVEL_QUERIES = [
     {
         "id": "novel_01",
@@ -96,17 +96,102 @@ BENCHMARK_NOVEL_QUERIES = [
         "id": "novel_15",
         "query": "synthesize a creative high-fiber lunch using cauliflower rice and bell peppers",
         "category": "Keto/Fiber lunch"
+    },
+    {
+        "id": "novel_16",
+        "query": "invent a creative high-protein smoothie bowl using greek yogurt and blueberries without bananas",
+        "category": "High-protein breakfast + Fruit exclusion"
+    },
+    {
+        "id": "novel_17",
+        "query": "create a spicy Mexican-Asian fusion dinner using chicken and kimchi",
+        "category": "Cross-cuisine fusion + Poultry"
+    },
+    {
+        "id": "novel_18",
+        "query": "synthesize a diabetic-friendly low-carb dinner featuring cod and cauliflower mash",
+        "category": "Diabetic-friendly + Seafood"
+    },
+    {
+        "id": "novel_19",
+        "query": "invent a dairy-free nut-free creamy pasta sauce using butternut squash and sunflower seeds",
+        "category": "Allergen exclusion + Vegan pasta"
+    },
+    {
+        "id": "novel_20",
+        "query": "create a novel Mediterranean vegetarian wrap combining hummus, roasted eggplant, and pomegranate",
+        "category": "Mediterranean + Vegetarian lunch"
+    },
+    {
+        "id": "novel_21",
+        "query": "synthesize a low-sodium dinner combining lean ground turkey and zucchini noodles without added salt",
+        "category": "Low-sodium + Low-carb"
+    },
+    {
+        "id": "novel_22",
+        "query": "invent a refreshing summer salad pairing watermelon, cucumber, and fresh mint with no dairy",
+        "category": "Dairy-free summer salad"
+    },
+    {
+        "id": "novel_23",
+        "query": "create a hearty vegan chili using sweet potatoes, kidney beans, and dark cocoa powder",
+        "category": "Vegan stew + Creative pairing"
+    },
+    {
+        "id": "novel_24",
+        "query": "synthesize an Italian-Japanese fusion main dish featuring seared tuna and basil pesto",
+        "category": "Cross-cuisine fusion + Seafood"
+    },
+    {
+        "id": "novel_25",
+        "query": "invent a gluten-free savory breakfast pancake using chickpea flour and spinach",
+        "category": "Gluten-free + High-protein breakfast"
+    },
+    {
+        "id": "novel_26",
+        "query": "create an energizing snack bite combining chia seeds, rolled oats, and dark chocolate without peanuts",
+        "category": "Nut-free energy snack"
+    },
+    {
+        "id": "novel_27",
+        "query": "synthesize a comforting autumn soup combining roasted carrots, ginger, and coconut milk",
+        "category": "Vegan comforting soup"
+    },
+    {
+        "id": "novel_28",
+        "query": "invent a Mediterranean-style baked chicken breast stuffed with spinach and feta cheese",
+        "category": "Low-carb Mediterranean dinner"
+    },
+    {
+        "id": "novel_29",
+        "query": "create a savory keto breakfast casserole using eggs, mushrooms, and bell peppers without cheese",
+        "category": "Keto breakfast + Dairy-free"
+    },
+    {
+        "id": "novel_30",
+        "query": "synthesize a novel citrus dessert featuring lemon, chia pudding, and raspberries with no dairy",
+        "category": "Vegan dessert + Fruit pairing"
     }
 ]
 
 EVAL_OUTPUT_PATH = os.path.join(PROJECT_ROOT, "memory", "eval_novel_recipes.json")
 
 
-def generate_benchmark_recipes(num_recipes: int = 15, novelty_level: str = "balanced") -> str:
+def generate_benchmark_recipes(
+    num_recipes: int = 30,
+    novelty_level: str = "balanced",
+    clear_existing_memory: bool = True
+) -> str:
     """
     Executes novel recipe generation across benchmark queries and persists full triplets.
+    Clears existing conversation memory and eval dataset before starting so that
+    exactly the target benchmark recipes are saved.
     """
     os.makedirs(os.path.dirname(EVAL_OUTPUT_PATH), exist_ok=True)
+    if clear_existing_memory:
+        clear_history(clear_eval=True)
+        print("[Memory] Successfully cleared previous conversation memory and evaluation dataset.")
+
     selected_queries = BENCHMARK_NOVEL_QUERIES[:num_recipes]
     
     print(f"\n{'='*70}")
@@ -183,7 +268,7 @@ def generate_benchmark_recipes(num_recipes: int = 15, novelty_level: str = "bala
 
 
 if __name__ == "__main__":
-    n = 15
+    n = 30
     if len(sys.argv) > 1:
         try:
             n = int(sys.argv[1])

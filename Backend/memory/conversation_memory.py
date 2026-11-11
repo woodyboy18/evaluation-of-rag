@@ -107,12 +107,16 @@ def get_recent_history(last_n=5):
 
 
 # ================= CLEAR =================
-def clear_history():
+def clear_history(clear_eval: bool = False):
     """
-    Delete all conversation history.
+    Delete all conversation history, optionally also resetting the novel evaluation dataset.
     """
     with open(MEMORY_FILE, "w", encoding="utf-8") as f:
         json.dump([], f, indent=4)
+
+    if clear_eval and os.path.exists(EVAL_FILE):
+        with open(EVAL_FILE, "w", encoding="utf-8") as f:
+            json.dump([], f, indent=4)
 
 
 # ================= FORMAT HISTORY =================

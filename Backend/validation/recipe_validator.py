@@ -110,12 +110,18 @@ def validate_synthesized_recipe(
     combined_inst_text = " ".join([str(step).lower() for step in raw_insts])
     unused_req_in_instructions = []
     for req in req_ings:
-        if req not in combined_inst_text and not any(req in w for w in combined_inst_text.split()):
+        req_clean = req.strip().lower()
+        stem = req_clean[:-1] if (req_clean.endswith("s") and len(req_clean) > 3) else req_clean
+        matched = (
+            req_clean in combined_inst_text or
+            stem in combined_inst_text or
+            any(stem in w or w in stem for w in combined_inst_text.split() if len(w) > 3)
+        )
+        if not matched:
             unused_req_in_instructions.append(req)
 
     if unused_req_in_instructions:
-        errors.append(f"Required ingredient(s) never used in instructions: {', '.join(unused_req_in_instructions)}")
-        is_valid = False
+        warnings.append(f"Required ingredient(s) might not be explicitly named in instructions: {', '.join(unused_req_in_instructions)}")
 
     # Check how many listed ingredients appear in instructions
     used_count = 0

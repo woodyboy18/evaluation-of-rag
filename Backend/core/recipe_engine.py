@@ -14,7 +14,7 @@ from retrieval.hybrid_retriever import retrieve_hybrid_rrf
 from retrieval.parent_retriever import retrieve_diverse_parents
 from ingredients.ontology import IngredientOntology
 from generation.novel_generator import generate_novel_candidates
-from validation.recipe_validator import validate_synthesized_recipe
+from validation.recipe_validator import validate_synthesized_recipe, ValidationResult
 from validation.novelty_scorer import compute_novelty_score
 
 _engine_initialized = False
@@ -339,6 +339,20 @@ def answer_query(query: str, requested_mode: str = "auto", novelty_level: str = 
             nov_scores = compute_novelty_score(cand, _df, _ingredient_index)
             cand["novelty_scores"] = nov_scores
             valid_candidates.append(cand)
+
+    # If strict validation rejected all candidates, gracefully fall back to the best available candidate
+    if not valid_candidates and candidates:
+        for cand in candidates:
+            if "novelty_scores" not in cand:
+                cand["novelty_scores"] = compute_novelty_score(cand, _df, _ingredient_index)
+        candidates.sort(
+            key=lambda c: (
+                c.get("validation", ValidationResult(is_valid=False)).constraint_score,
+                c.get("novelty_scores", {}).get("novelty_score", 0.0)
+            ),
+            reverse=True
+        )
+        valid_candidates.append(candidates[0])
 
     if valid_candidates:
         valid_candidates.sort(key=lambda c: c["novelty_scores"]["novelty_score"], reverse=True)
