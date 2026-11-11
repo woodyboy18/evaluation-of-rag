@@ -178,19 +178,17 @@ EVAL_OUTPUT_PATH = os.path.join(PROJECT_ROOT, "memory", "eval_novel_recipes.json
 
 
 def generate_benchmark_recipes(
-    num_recipes: int = 30,
+    num_recipes: int = 15,
     novelty_level: str = "balanced",
-    clear_existing_memory: bool = True
+    clear_existing_memory: bool = False
 ) -> str:
     """
     Executes novel recipe generation across benchmark queries and persists full triplets.
-    Clears existing conversation memory and eval dataset before starting so that
-    exactly the target benchmark recipes are saved.
     """
     os.makedirs(os.path.dirname(EVAL_OUTPUT_PATH), exist_ok=True)
     if clear_existing_memory:
         clear_history(clear_eval=True)
-        print("[Memory] Successfully cleared previous conversation memory and evaluation dataset.")
+        print("[Memory] Cleared conversation memory and evaluation dataset.")
 
     selected_queries = BENCHMARK_NOVEL_QUERIES[:num_recipes]
     
@@ -268,7 +266,7 @@ def generate_benchmark_recipes(
 
 
 if __name__ == "__main__":
-    n = 30
+    n = 15
     if len(sys.argv) > 1:
         try:
             n = int(sys.argv[1])
