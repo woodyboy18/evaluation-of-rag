@@ -54,6 +54,16 @@ def initialize_engine(use_fixture_if_missing: bool = True):
 
     if has_full_data:
         print("Loading full RecipeDB metadata...")
+        # Compatibility shim for unpickling NumPy 2.x pickles under NumPy 1.x
+        import sys
+        import numpy as _np
+        if not hasattr(_np, "_core"):
+            sys.modules["numpy._core"] = _np.core
+            if hasattr(_np.core, "multiarray"):
+                sys.modules["numpy._core.multiarray"] = _np.core.multiarray
+            if hasattr(_np.core, "_multiarray_umath"):
+                sys.modules["numpy._core._multiarray_umath"] = _np.core._multiarray_umath
+
         with open(METADATA_PATH, "rb") as f:
             metadata = pickle.load(f)
         _df = pd.DataFrame(metadata)
