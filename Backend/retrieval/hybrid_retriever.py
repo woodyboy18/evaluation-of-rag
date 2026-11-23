@@ -97,17 +97,20 @@ def retrieve_hybrid_rrf(
     if not query_tokens:
         query_tokens = raw_tokens
 
-    bm25_scores = bm25_model.get_scores(query_tokens)
-    top_bm25_positions = np.argsort(bm25_scores)[::-1]
-
     bm25_ranks = {}
-    rank_count = 1
-    for b_pos in top_bm25_positions:
-        if b_pos < total_docs and b_pos in candidate_positions:
-            bm25_ranks[b_pos] = rank_count
-            rank_count += 1
-            if rank_count > 100:
-                break
+    if bm25_model is not None:
+        try:
+            bm25_scores = bm25_model.get_scores(query_tokens)
+            top_bm25_positions = np.argsort(bm25_scores)[::-1]
+            rank_count = 1
+            for b_pos in top_bm25_positions:
+                if b_pos < total_docs and b_pos in candidate_positions:
+                    bm25_ranks[b_pos] = rank_count
+                    rank_count += 1
+                    if rank_count > 100:
+                        break
+        except Exception:
+            pass
 
     # 4. Compute RRF Scores
     rrf_scores = {}

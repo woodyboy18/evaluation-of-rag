@@ -59,3 +59,8 @@ Backend/cache/*
 Backend/data/*.csv
 Backend/data/*.index
 Backend/data/*.pkl
+
+# Thesis / Report documents (do not push to GitHub)
+btech_thesis_cover.tex
+btp_report.tex
+sample.bib

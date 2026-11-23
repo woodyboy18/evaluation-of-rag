@@ -151,21 +151,16 @@ def initialize_engine(use_fixture_if_missing: bool = True):
 
     # Memory-efficient BM25 index building over titles & ingredients
     print("Building memory-efficient BM25 index...")
-    from rank_bm25 import BM25Okapi
     try:
+        from rank_bm25 import BM25Okapi
         bm25_texts = [
             (_stringify_field(row.get("title")) + " " + _stringify_field(row.get("ingredients"))).lower().split()
             for _, row in _df.iterrows()
         ]
         _bm25_model = BM25Okapi(bm25_texts)
     except (MemoryError, Exception) as e:
-        print(f"Warning: Full BM25 memory allocation failed ({e}). Building BM25 on sampled corpus...")
-        sample_df = _df.head(50000)
-        bm25_texts = [
-            (_stringify_field(row.get("title")) + " " + _stringify_field(row.get("ingredients"))).lower().split()
-            for _, row in sample_df.iterrows()
-        ]
-        _bm25_model = BM25Okapi(bm25_texts)
+        print(f"Warning: Full BM25 initialization failed ({e}). Proceeding with vector search fallback...")
+        _bm25_model = None
 
     # Load or build Ingredient Index
     if os.path.exists(INGREDIENT_INDEX_PATH):

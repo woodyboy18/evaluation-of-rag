@@ -1,4 +1,10 @@
 import os
+import sys
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 import pandas as pd
 import faiss
 import numpy as np
@@ -6,9 +12,6 @@ from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 from ingredients.normalizer import normalize_ingredient_list
 from ingredients.ingredient_index import IngredientIndex
-
-# ================= CONFIG =================
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_PATH = os.path.join(BASE_DIR, "data", "Recipedb_kk.csv")
 FAISS_INDEX_PATH = os.path.join(BASE_DIR, "data", "recipes_faiss.index")
 METADATA_PATH = os.path.join(BASE_DIR, "data", "recipes_metadata.pkl")
@@ -66,22 +69,26 @@ def build_index_main():
     print(f"✅ Ingredient index saved to: {INGREDIENT_INDEX_PATH}")
 
     # ================= LOAD EMBEDDING MODEL =================
-    print("Loading embedding model...")
-    embed_model = SentenceTransformer(EMBEDDING_MODEL)
+    import torch
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Loading embedding model onto {device.upper()}...")
+    embed_model = SentenceTransformer(EMBEDDING_MODEL, device=device)
+    curr_batch_size = 256 if device == "cuda" else BATCH_SIZE
 
     embedding_dim = embed_model.get_sentence_embedding_dimension()
     index = faiss.IndexFlatL2(embedding_dim)
 
     # ================= BUILD FAISS INDEX =================
-    print("Creating embeddings and building FAISS index...")
-    for start in tqdm(range(0, len(df), BATCH_SIZE)):
-        texts = df["document"].iloc[start:start + BATCH_SIZE].tolist()
+    print(f"Creating embeddings and building FAISS index on {device.upper()} (batch_size={curr_batch_size})...")
+    for start in tqdm(range(0, len(df), curr_batch_size)):
+        texts = df["document"].iloc[start:start + curr_batch_size].tolist()
         embeddings = embed_model.encode(
             texts,
+            batch_size=curr_batch_size,
             convert_to_numpy=True,
             show_progress_bar=False
         )
-        index.add(np.array(embeddings))
+        index.add(np.array(embeddings).astype(np.float32))
 
     # ================= SAVE =================
     print("Saving FAISS index...")
